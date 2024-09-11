@@ -1,0 +1,5 @@
+sciparser/
+current-issue-names.txt
+*.env
+*.log
+*.swp
