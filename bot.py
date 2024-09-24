@@ -13,10 +13,20 @@ from aiogram.fsm.context import FSMContext
 import aiogram.utils.markdown as fmt
 from aiogram.fsm.state import State, StatesGroup
 
+from aiohttp import web
+import argparse
+
+def build_arg_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--api_type",
+                        help = "Choose API type (default: None)",
+                        default=None,
+                        choices=['polling','webhook'])
+    return parser
+
 TELEGRAM_TOKEN = os.environ.get('TELEGRAM_TOKEN', '')
 
 bot = Bot(token=TELEGRAM_TOKEN)
-dp = Dispatcher()
 router = Router()
 
 class Context(StatesGroup):
@@ -221,7 +231,20 @@ async def set_main_menu(bot: Bot):
     await bot.set_my_commands(main_menu)
 
 
+async def main_polling():
+    logging.debug("Entered main_polling()")
+    dp = Dispatcher()
+    dp.include_router(router)
+    dp.startup.register(set_main_menu)
+    await dp.start_polling(bot)
+
+async def main_webhook():
+    logging.debug("Entered main_webhook()")
+    pass
+
 if __name__ == "__main__":
+    parser = build_arg_parser()
+    args = parser.parse_args()
     logging.root.handlers = []
     logging.basicConfig(
         level=logging.INFO,
@@ -231,7 +254,14 @@ if __name__ == "__main__":
             logging.StreamHandler(sys.stdout)
         ]
     )
-
-    dp.include_router(router)
-    dp.startup.register(set_main_menu)
-    dp.run_polling(bot)
+    api_type = args.api_type
+    try:
+        if api_type == 'webhook':
+            asyncio.run(main_webhook())
+        elif api_type == 'polling':
+            asyncio.run(main_polling())
+    except:
+        print('Some exception occured!')
+#    dp.include_router(router)
+#    dp.startup.register(set_main_menu)
+#    dp.run_polling(bot)
