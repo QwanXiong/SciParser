@@ -1,3 +1,6 @@
+
+#TODO: use aiosqlite of some other asynchronous database framework
+#TODO: rewrite requests to the journals websites using aiohttp
 import logging
 import os
 import sys
@@ -13,6 +16,7 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.fsm.context import FSMContext
 import aiogram.utils.markdown as fmt
 from aiogram.fsm.state import State, StatesGroup
+from aiogram.handlers import ErrorHandler
 
 from aiohttp import web
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
@@ -213,6 +217,11 @@ async def remove_keyword(callback: CallbackQuery):
     )
 
 
+@router.errors()
+class MyHandler(ErrorHandler):
+    async def handle(self):
+        logging.error("Some error "+str(self.exception_name)+" "+str(self.event.exception))
+
 @router.callback_query(Context.waiting_for_keywords and F.data == FINALIZE_KEYWORDS_CBK)
 async def finalize_keywords_selection(callback: CallbackQuery, state: FSMContext):
     if isinstance(callback.message, types.InaccessibleMessage) or callback.message is None:
@@ -257,15 +266,12 @@ async def main_polling():
     dp = Dispatcher()
     dp.include_router(router)
     dp.startup.register(set_main_menu_polling)
+    #INFO: synchronous dp.run_polling() in fact calls asynchronous dp.start_polling()
     await dp.start_polling(bot)
 
-###async def on_startup(bot: Bot) -> None:
-#    # If you have a self-signed SSL certificate, then you will need to send a public
-#    # certificate to Telegram
+
+#async def on_startup():
 #    await bot.set_webhook(f"{BASE_WEBHOOK_URL}{WEBHOOK_PATH}", secret_token=WEBHOOK_SECRET)
-#
-async def on_startup():
-    await bot.set_webhook(f"{BASE_WEBHOOK_URL}{WEBHOOK_PATH}", secret_token=WEBHOOK_SECRET)
 
 
 def main_webhook():
