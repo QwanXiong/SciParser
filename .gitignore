@@ -3,4 +3,3 @@ current-issue-names.txt
 *.env
 *.log
 *.swp
-.env.example

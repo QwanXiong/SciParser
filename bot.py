@@ -1,5 +1,5 @@
 
-#TODO: use aiosqlite of some other asynchronous database framework
+#TODO: use aiosqlite or some other asynchronous database framework
 #TODO: rewrite requests to the journals websites using aiohttp
 import logging
 import os
