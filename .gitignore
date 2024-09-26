@@ -3,3 +3,4 @@ current-issue-names.txt
 *.env
 *.log
 *.swp
+__pycache__/
