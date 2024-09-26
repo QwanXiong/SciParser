@@ -2,6 +2,9 @@
 #TODO: delete keyboard once "finalize" is reached
 #TODO: use aiosqlite or some other asynchronous database framework
 #TODO: rewrite requests to the journals websites using aiohttp
+#WARNING: if error occures the error message is logged twice. Probably the reason for that
+#         is that logging is done using calls to root logger. Need to create another logger 
+#         in addition to bot_err_logger defined in loggers.py
 import logging
 import os
 import sys

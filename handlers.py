@@ -12,6 +12,8 @@ from typing import Optional, Union, List, Dict
 import logging
 from aiogram import Router
 
+from loggers import bot_err_logger
+
 router = Router()
 
 class Context(StatesGroup):
@@ -71,6 +73,11 @@ def build_keyboard(options: List[str], callback_data: List[str], finalize_button
 def build_journal_keyboard(*selected_options: str) -> InlineKeyboardMarkup:
     return build_keyboard(JOURNALS, JOURNALS_CBK, FINALIZE_JOURNALS_TEXT, FINALIZE_JOURNALS_CBK, *selected_options)
 
+
+@router.message(Command("invoke_error"))
+async def command_invoke_error_handler(message: types.Message, state: FSMContext):
+    await message.answer("Error raised")
+    raise RuntimeError("This is error")
 
 @router.message(Command("start"))
 async def command_start_handler(message: types.Message, state: FSMContext):
@@ -196,7 +203,14 @@ async def remove_keyword(callback: CallbackQuery):
 @router.errors()
 class MyHandler(ErrorHandler):
     async def handle(self):
-        logging.error("Some error "+str(self.exception_name)+" "+str(self.event.exception))
+       # vv = vars(self)
+       # #print(vv)
+       # for v in vv.items():
+       #     print(v)
+       # print(type(self.event.exception).__name__)
+        bot_err_logger.error("Some error "+str(type(self.event.exception).__name__)+" "+str(self.event.exception))
+        #pass
+       # bot_err_logger.error("Some error "+str(self.exception_name)+" "+str(self.event.exception))
 
 @router.callback_query(Context.waiting_for_keywords and F.data == FINALIZE_KEYWORDS_CBK)
 async def finalize_keywords_selection(callback: CallbackQuery, state: FSMContext):
