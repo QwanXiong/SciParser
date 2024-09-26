@@ -1,10 +1,22 @@
-#TODO: adminn access with a filter by chat_id
+#TODO: admin access with a filter by chat_id
 #TODO: delete keyboard once "finalize" is reached
 #TODO: use aiosqlite or some other asynchronous database framework
 #TODO: rewrite requests to the journals websites using aiohttp
-#WARNING: if error occures the error message is logged twice. Probably the reason for that
-#         is that logging is done using calls to root logger. Need to create another logger 
-#         in addition to bot_err_logger defined in loggers.py
+#FIXME: if the error occures the error message is logged twice. Probably the reason for that
+#       is that logging is done using calls to the root logger. Need to create another logger 
+#       in addition to bot_err_logger defined in loggers.py
+
+#INFO: Basic ideas for the structure of the bot:
+#      Probably journals websites should be parsed once a day independently of 
+#      what users want, so that websites would not be bombarded with requests
+#      every time a user wants something. Users are then fetched with updates from 
+#      the precompiled database which gets updated during the requests to journals
+#      Plus it would be easier to track errors on the journals' side using this 
+#      approach.
+#
+#INFO: For updates the good approach probably would be to use some kind of scheduler.
+#      https://github.com/aiogram/aiogram/discussions/858
+
 import logging
 import os
 import sys
