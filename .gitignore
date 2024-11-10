@@ -4,3 +4,4 @@ current-issue-names.txt
 *.log
 *.swp
 __pycache__/
+text*
