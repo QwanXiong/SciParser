@@ -1,27 +1,23 @@
 import requests
 import json
-from scipy.spatial import distance
 from sentence_transformers import SentenceTransformer
-import pandas as pd
 from bs4 import BeautifulSoup as bs
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 import time
 import re
-from scholarly import scholarly
-
 
 
 model=SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 
 def vecs(text,model):
     #print(model)
+    
     text=model.encode([text])[0]
     return text
 
 def tandof_abst(url):
-    #op = webdriver.ChromeOptions()
-    #op.add_argument('headless')
+    
     driver = webdriver.Chrome()
     driver.set_page_load_timeout(5)
     #wait =
@@ -88,7 +84,7 @@ def tandof_abst_gs(doi):
 
 
 def crossref_api(issn,date,offset):
-    #if offset%100!=0:
+    
     assert offset%100==0
     url="http://api.crossref.org/journals"+"/"+issn+"/works?filter=from-pub-date:"+date+'&rows=100'+'&offset='+str(offset)
     tree=requests.get(url)
@@ -98,12 +94,12 @@ def crossref_api(issn,date,offset):
         return {}
     dic={'issue':[],'doi':[],'type':[],'title':[],'author':[],'volume':[],'abstract_vec':[],'abstract':[]}
     for i in js_obj['message']['items']:
-        #print(i)
+        #print('sdf')
         if 'abstract' not in i.keys():#for future: if no abstract add title of the article
             if i['publisher']=='Informa UK Limited':
                 
                 abstract_tand=tandof_abst('https://www.tandfonline.com/doi/full/'+i['DOI'])
-                #abstract_tand=tandof_abst_gs(i['DOI'])
+                
                 if abstract_tand=='None':
                      dic['abstract'].append(i['title'])
                      dic['abstract_vec'].append(vecs(i['title'][0],model))
@@ -128,9 +124,9 @@ def crossref_api(issn,date,offset):
             dic['volume'].append('')
         dic['doi'].append(i['DOI'])
         dic['type'].append(i['type'])
-        dic['title'].append(i['title'])
+        dic['title'].append(i['title'][0])
          
-        print(dic['abstract'][-1],'||||||',dic['type'][-1])
+        
         author=[]
         for d in i['author']:
             if 'given' not in d.keys():
@@ -144,36 +140,6 @@ def crossref_api(issn,date,offset):
                 author.append(' '.join([d['given'],d['family']]))
         
         #au
-        print(dic['abstract'][-1])
+        
         dic['author'].append(', '.join(author))
     return dic
-    
-data=pd.DataFrame()
-#print(tandof_abst_gs('10.1080/2154896X.2024.2414643'))
-
-for i in range(0,100,100):
-    print(i)
-    #a=crossref_api('0021-9606','2024-01-01',i) #journal of chemcial physics
-   # a=crossref_api('2154-8978','2024-01-01',i) #polar journal (no abstracts in crossref)
-    #a=crossref_api('0003-0554','2024-01-01',i) #American Political Science Review
-   # a=crossref_api('0144-235X','2024-01-01',i) #International review of physical chemistry
-    #a=crossref_api('2071-1050','2024-01-01',i)#Sustainability
-    a=crossref_api('0263-0338','2024-01-01',i)
-    data=pd.concat([data,pd.DataFrame(a)])
-
-    if a=={}:
-        break
-#print(data)
-#keywords='Molecular dynamics computational chemistry atomic simulations statistical mechanics statistical physics'
-keywords='International regimes governance international organiation interstate relations international politics cooperation'
-keywords=vecs(keywords,model)
-#print(keywords.shape)
-#print(model)
-dist=[]
-for i in range(data.shape[0]):
-    #print(i,data['abstract_vec'].tolist()[i].shape,keywords.shape)
-    
-    dist.append(1-distance.cosine(data['abstract_vec'].tolist()[i],keywords))
-data['dist']=dist
-print(data.sort_values(by='dist',ascending=False)['title'].head(10).tolist())
-print(data.sort_values(by='dist',ascending=False)['title'].tail(10).tolist())
