@@ -62,7 +62,7 @@ class journals:
         else:
             id_=1
         
-            
+        #print(id_)
         self.cur.execute('INSERT INTO journals VALUES (?,?,?)',(id_,name,issn))
 class papers:
     def __init__(self,cursor):
@@ -78,7 +78,7 @@ class papers:
                          abstract TEXT NOT NULL,
                          abstract_vec TEXT NOT NULL,
                          doi TEXT NOT NULL,
-                         journal_id INTEGER)''')
+                         journal_id INT)''')
 
                
     def update(self,date):
@@ -93,10 +93,13 @@ class papers:
             while a!={}:
                 a=crossref_api(i[1],date,d)
                 
-                data=pd.concat([data,pd.DataFrame(a)])
+                data=pd.concat([data,pd.DataFrame(a)],ignore_index=True)
                 d+=100
                 #break
-            data['journal_id']=[i[0] for c in range(data.shape[0])]
+                #if d%500==0:
+                    #print('d=')
+            #print('hihi',type(i[0]))    
+            data['journal_id']=[int(i[0]) for c in range(data.shape[0])]
             
             
             self.cur.execute('SELECT MAX(paper_id) FROM papers')
@@ -107,10 +110,13 @@ class papers:
                 id_=1
             for d in range(data.shape[0]):
                
-                
+                #print( data['title'][d])
+                #print(data['journal_id'][d])
                 self.cur.execute('INSERT INTO papers VALUES(?,?,?,?,?,?,?,?,?,?)',(id_,data['title'][d],data['type'][d],data['author'][d],data['volume'][d],data['issue'][d],str(data['abstract'][d]),str(data['abstract_vec'][d]),data['doi'][d],data['journal_id'][d]))
                 id_+=1
-        print('updated journals')   
+        print('updated journals')
+        self.cur.execute("SELECT journal_id FROM papers")
+        #print(self.cur.fetchall())
         queue(self.cur).papers_search()
 class users:
     def __init__(self,cursor):
@@ -164,8 +170,8 @@ connection=sqlite3.connect('database.db')
 cursor=connection.cursor()
 j=journals(cursor)
 j.create_table()
-j.add('Journal of chemcial physics','0021-9606')
-j.add('Sustainability','2071-1050')
+j.add('International Organization','0020-8183')
+j.add('American Political Science Review','0003-0554')
 u=users(cursor)
 u.create_table()
 u.add('MArco123','Marc Ivanovicj',30,'2024-01-01')
@@ -173,6 +179,8 @@ u.add_keywords(1,'climate change','climate, global warming, heatwaves, cold snap
 p=papers(cursor)
 p.create_table()
 print('created_tables')
+cursor.execute('SELECT * FROM journals')
+print(cursor.fetchall())
 
 queue(cursor).create_table()
 p.update('2024-01-01')
@@ -182,7 +190,11 @@ cursor.execute('SELECT * FROM queue')
 qu=cursor.fetchall()
 for i in qu:
     
-    cursor.execute('SELECT title,abstract FROM papers WHERE paper_id=?',(i[0],))
+    aa=cursor.execute('SELECT title,abstract,journal_id FROM papers WHERE paper_id=?',(i[0],))
+    aa=cursor.fetchall()
+    print(aa)
+    print(int.from_bytes(aa[0][2],'little'))
+    cursor.execute('SELECT journal_name FROM journals WHERE journal_id=?',(int.from_bytes(aa[0][2],'little'),))
     print(cursor.fetchall())
     print('____')
 connection.commit()

@@ -128,16 +128,19 @@ def crossref_api(issn,date,offset):
          
         
         author=[]
-        for d in i['author']:
-            if 'given' not in d.keys():
-               # print(d,i['DOI'])
-                if 'family' not in d.keys():
-                    #print(d,i['DOI'])
-                    author.append(' ')
+        if "author" in i.keys():
+            for d in i['author']:
+                if 'given' not in d.keys():
+                   # print(d,i['DOI'])
+                    if 'family' not in d.keys():
+                        #print(d,i['DOI'])
+                        author.append(' ')
+                    else:
+                        author.append(d['family'])
                 else:
-                    author.append(d['family'])
-            else:
-                author.append(' '.join([d['given'],d['family']]))
+                    author.append(' '.join([d['given'],d['family']]))
+        else:
+            author.append(' ')
         
         #au
         
