@@ -3,7 +3,7 @@ import requests
 import json
 import re
 import time
-
+import pickle
 
 
 
@@ -25,6 +25,8 @@ def get_request():
        # 'Sec-Fetch-Mode': 'navigate',
        # 'Sec-Fetch-Site': 'none'}
         URL = 'https://scholar.google.com/scholar?hl=ru&as_sdt=0%2C5&q=10.1080%2F2154896X.2024.2342109+&btnG='
+        #URL = 'https://scholar.google.com/'
+        #URL = 'https://scholar.google.com/scholar?hl=en&as_sdt=0%2C5&q=article&btnG='
         params = {'asynchronous':True, 
          'evalScripts':True, 
          'method':'get'
@@ -34,30 +36,45 @@ def get_request():
             "Accept-Encoding":"gzip, deflate, br, zstd",
             "Accept-Language":"en-US,en;q=0.5",
             "Connection":"keep-alive",
-            #"Cookie":"timezone=180; MAID=B/bFSLQ1YVJ4NE5/55o7hw==; MACHINE_LAST_SEEN=2024-11-10T00%3A21%3A09.017-08%3A00; OptanonConsent=isGpcEnabled=0&datestamp=Wed+Apr+24+2024+10%3A42%3A35+GMT%2B0300+(Moscow+Standard+Time)&version=202402.1.0&browserGpcFlag=0&isIABGlobal=false&hosts=&consentId=472924bf-c65a-4666-be1a-78b05d9507bf&interactionCount=1&isAnonUser=1&landingPath=NotLandingPage&groups=C0001%3A1%2CC0002%3A1%2CC0003%3A1%2CC0004%3A1&geolocation=RU%3BMOW&AwaitingReconsent=false; OptanonAlertBoxClosed=2024-04-24T07:42:35.647Z; OptanonConsent=isGpcEnabled=0&datestamp=Sun+Nov+10+2024+11%3A21%3A11+GMT%2B0300+(Moscow+Standard+Time)&version=202409.1.0&browserGpcFlag=0&isIABGlobal=false&hosts=&consentId=472924bf-c65a-4666-be1a-78b05d9507bf&interactionCount=1&isAnonUser=1&landingPath=NotLandingPage&groups=C0001%3A1%2CC0002%3A1%2CC0003%3A1%2CC0004%3A1&geolocation=RU%3BMOW&AwaitingReconsent=false; JSESSIONID=A299C81FF3D8EF850FCFAAEDD30B20EF; cf_clearance=p4cjqlfyl6rfPw2frHynYntwi_ZGba998xfgxzSL4A0-1731226870-1.2.1.1-raw.dXSa_axvrRqmuop75qx_6vBgjPW_hB7T7QHQdWkAL4QJzr3AXw7.1J5GK269O69fExa6_gVyZGsIREiv1JcSxaPb9BbKtZgnEsfhzNY_qMrEIQ6YBYsyvtBoKaHgQhQEtPzORGmQEJwWkutwM6Nf951NA6.9AoHCos8..0SFVxYQIy_XN_kCNq6eWDAEG_t2wSsKMqZW_BPOmJmx8mPR0cN1nkB5vnPb2EzpOHH_frE0xJ7qvpnnIx.D.IWtQS3ca4pkMY1O1f1wh3EvAk8PkUuk9aKRuETTrIQmHPixhQHUWmwGw8GHdZxlZBHseZHE66cfT28gUWrdS3WAQA",
+            #"Cookie": u"NID=519=RyuVY4iR7oJA14GSrCKsRoHxXUdqY63uZs6k1wL-kQMcZ3elX3ToQ28OyLM3ShifKbfUYjm1uscmeLYfyrtR-TMIT9mZh1D3tdF5s6L-htW7LZAs0yNJwFpyqCM895XFzZn8SGbzZY6z9AYmuPDQCh50274wAbYp4j5ZTXkLyNRFLq66vprzx8O3ihmmUp157plh_p2sHBw4z9MB63uiwUZ71y9fysHFabEgqwJt-C-fuc042WgIfE37tXzNOxAUlWzSnZGNibawpoumlX-Ll_PBCRKCshpnHwZf6D8rqVzZ6bR4O3UqnUBS3Nb-PEc7Z_Cc7YWl2aMFN14rbNWagIh_QdhIoaOVzguPgTraMekrfS__jtTiehse3EkbnAg0zS_jsqHr2x7b5v_X1I9Ept0v5p2NRM9jCpLdch8IbqUMFV2STl4rH-GMiocAhdQhlJRvz448cAgBlG2p-YQSeBeA; GSP=LM=1716448887:S=KClEgH2GiHUZfdW4pL9wkqEWByatqkQWlaDzdKvVCcOKxYxvj7lxJwk6UCBAA; __Secure-ENID=21.SE=EnZ5JaAXEOGa96irfspCBbsr7mu0yxmiH73q-36u_3eA62mekaxGqxwd1fsUF077pGmCrnRHvyDJGduhr3ILxajTfhXCIFD8vxcp7BLzeMf4CPAn4-431654Uo0G5MkayXlp2szp47RyM3j-YVJacwCHquMHiP_y8OjT2Nm7nLNSTcsUnwc1n0JrcqSBoIbeLhyUvM_a3dMiergTdYK3R68QtFDNMiZF0uvp9AKwES5vXJtpHpi3oaHYI5c0fjA-M5D3LQBnQnOOgFQlhbnPz88so-Qdo6qfupaE_1hicOqD_Q0BBE7fM8Uc4vlIt0ZwXM1NdM1TfpT_N4f280j_UaVUxsnrsgo-QX6U-E-B4AkcpjxY5XOy_g; AEC=AZ6Zc-W0qHg0q9DqfAfY4DdP-GQqi8I0zrqeHoqzA6LqfiGtlnsUnTAfPQ",
             "Host": "scholar.google.com",
             "Priority": "u=0, i",
-            "Referer": "https://scholar.google.com/scholar?hl=ru&as_sdt=0%2C5&q=https%3A%2F%2Fdoi.org%2F10.1080%2F2154896X.2024.2342109+&btnG=",
+            #"Referer": "https://scholar.google.com/scholar?hl=ru&as_sdt=0%2C5&q=https%3A%2F%2Fdoi.org%2F10.1080%2F2154896X.2024.2342109+&btnG=",
             "Sec-Fetch-Dest": "document",
             "Sec-Fetch-Mode":"navigate",
-            "Sec-Fetch-Site":"same-origin",
+            "Sec-Fetch-Site":"none",
             "Upgrade-Insecure-Requests": "1",
             "User-Agent":"Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:132.0) Gecko/20100101 Firefox/132.0"
         }
         #headers ={'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0',
         #    }
-        resp = s.get(URL,headers=headers,params=params)
-        #print(resp.content.decode())
-        res = re.search(r'<div class="gsh_csp">(.*?)</div>',resp.content.decode())
-        if res is not None:
-            print(res.group(1))
+       # cookies = {'GSP': 'LM=1731240616:S=5umxnT-vRFItU3uK'}
+       # cookies = {'NID': '519=dppCxVaiuZFvi5oCBxVSqkZyQp_Y3cSDMakFVTpNNb6f1WY1-DOZ90El5WNdoqp91Qe26nM2bYKMhTMJ4l0AV6GsAPu0Rfl7cmgqskQr9k6gxHXqKxNd64AWgvZN9Rtb1VdeUl-uLl4Rov_cDXUix2QUK8Kw3Ymb4seI2lPqcQP482kZjFE', 
+       #            'GSP': 'LM=1731316286:S=gEX83XKsGq9vuCBQ'}
 
-    #    issue_link = parse_issue_link(resp.text)
-    #    print(issue_link)
-    #    time.sleep(1)
-    #    resp = s.get(issue_link,headers=headers)
-    #    print(resp)
-    #    parse_article_names(resp.text)
+
+        #with open('cookiefile', 'rb') as f:
+        #    s.cookies.update(pickle.load(f))
+        for i in range(1000):
+            resp = s.get(URL,headers=headers,params=params)
+            #resp = requests.get(URL)
+            print(i,resp)
+            #print(resp.text)
+            res = re.search(r'<div class="gsh_csp">(.*?)</div>',resp.text)
+            if res is not None:
+                print(res.group(1))
+
+           # print(resp.cookies.get_dict())
+            print(s.cookies.get_dict())
+           # resp = s.get(URL,headers=headers)
+           # print(resp.cookies.get_dict())
+           # print(s.cookies.get_dict())
+        #with open('cookiefile', 'wb') as f:
+        #    pickle.dump(s.cookies, f)
+      #  res = re.search(r'<div class="gsh_csp">(.*?)</div>',resp.content.decode('utf-8'))
+      #  if res is not None:
+      #      print(res.group(1))
+
 
 
 if __name__ == '__main__':

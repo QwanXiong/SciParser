@@ -9,6 +9,7 @@ from sentence_transformers import SentenceTransformer
 model=SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 class database:
     def __init__(self):
+        print('DATABASE CLASS INITIALIZED')
         self.con=sqlite3.connect('database.db')
         self.cur=self.con.cursor()
         self.queue=self.queue(self.cur)
@@ -160,7 +161,7 @@ class database:
             print('updated journals')
             self.cur.execute("SELECT journal_id FROM papers")
             #print(self.cur.fetchall())
-            queue(self.cur).papers_search()
+            self.queue(self.cur).papers_search()
     class users:
 
         def __init__(self,cursor):
@@ -172,7 +173,7 @@ class database:
                             telegram_user_name TEXT NOT NULL,
                             telegram_name TEXT NOT NULL,
                             update_period INTEGER,
-                            last_update_time DATE)''')
+                            last_update_time TEXT)''')
             self.cur.execute('''CREATE TABLE IF NOT EXISTS keywords
                             (area_id INTEGER PRIMARY KEY,
                             area_name TEXT NOT NULL,
@@ -207,6 +208,7 @@ class database:
             self.cur.execute('INSERT INTO users_to_keywords VALUES (?,?)',(user_id,id_))
         
         def add_con_jour(self,user_id,journal):
+            self.cur.execute(SELECT journal_id FROM journals WHERE issn=)
             self.cur.execute('INSERT INTO users_to_journals VALUES (?,?)',(user_id,journal))
         def show(self):
             self.cur.execute('''SELECT * FROM users''')
@@ -222,7 +224,7 @@ class database:
                 
             return dic
 
-
+database_instance = database()
       
       
 #print('asdsad'

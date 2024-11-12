@@ -3,23 +3,47 @@ import asyncio
 from aiogram import F, types
 from aiogram.types import BotCommand, CallbackQuery
 from aiogram.filters import Command, CommandStart
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, TelegramObject
 from aiogram.fsm.context import FSMContext
 import aiogram.utils.markdown as fmt
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.handlers import ErrorHandler
-from typing import Optional, Union, List, Dict
+from typing import Optional, Union, List, Dict, Type, Callable, Awaitable, Any
 import logging
 from aiogram import Router
 
 from loggers import bot_err_logger
+from aiogram.dispatcher.middlewares.base import BaseMiddleware
+
+from testclass import newtestclass
+from testclass import testclass
+from dbms import database_instance
+from dbms import database
+
+from datetime import datetime
+
+class YourMiddleware(BaseMiddleware):
+    async def __call__(
+            self,
+            handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
+            event: TelegramObject,
+            data: Dict[str, Any]
+            ) -> Any: 
+            data['dbms'] = database_instance
+            #data['text'] = "test"
+            return await handler(event, data)
+   # async def on_pre_process_message(self, message: types.Message, data: dict):
+   #     # `text` is a name of var passed to handler
+   #     data["text"] = "Sample text"
 
 router = Router()
+router.message.middleware(YourMiddleware())
 
 class Context(StatesGroup):
     selecting_journals = State()
     waiting_for_keywords = State()
     processing_keywords = State()
+
 
 
 JOURNALS = [
@@ -79,11 +103,38 @@ async def command_invoke_error_handler(message: types.Message, state: FSMContext
     await message.answer("Error raised")
     raise RuntimeError("This is error")
 
+@router.message(Command("all_users"))
+async def show_users(message: types.Message, state: FSMContext, dbms: Type[database]):
+    #await message.answer()
+    dic = dbms.users.show()
+    print(dic)
+
+
 @router.message(Command("start"))
-async def command_start_handler(message: types.Message, state: FSMContext):
+async def command_start_handler(message: types.Message, state: FSMContext, dbms: Type[database]):
     #await bot.send_message(message.chat.id, fmt.text(LEXICON['/start']), reply_markup=build_journal_keyboard())
     await message.answer(fmt.text(LEXICON['/start']), reply_markup=build_journal_keyboard())
     await state.set_state(Context.selecting_journals)
+#    print(text)
+ #   text.pr()
+    #def add(self,telegram_id,telegram_user_name,telegram_name,update_period,last_update_time):
+    if not message.from_user.username:
+        username = ''
+    else:
+        username = message.from_user.username
+
+    if not message.from_user.first_name:
+        first_name = ''
+    else:
+        first_name = message.from_user.first_name
+    #first_name = message.from_user.first_name
+    update_period = 1
+    
+    last_update_time = datetime.today().strftime('%Y-%m-%d')
+    #print()
+    dbms.users.add(message.chat.id,username, first_name, update_period, last_update_time)
+     
+    
 
 
 @router.callback_query(F.data.in_(JOURNALS_CBK))
