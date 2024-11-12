@@ -207,9 +207,10 @@ class database:
             self.cur.execute('INSERT INTO keywords VALUES (?,?,?,?)',(id_,area,keywords,str(vecs(keywords,model))))
             self.cur.execute('INSERT INTO users_to_keywords VALUES (?,?)',(user_id,id_))
         
-        def add_con_jour(self,user_id,journal):
-            self.cur.execute(SELECT journal_id FROM journals WHERE issn=)
-            self.cur.execute('INSERT INTO users_to_journals VALUES (?,?)',(user_id,journal))
+        def add_con_jour(self,user_id,issn_):
+            self.cur.execute('SELECT journal_id FROM journals WHERE issn=?',(issn_,))
+            jour_id=self.cur.fetchone()[0]
+            self.cur.execute('INSERT INTO users_to_journals VALUES (?,?)',(user_id,jour_id))
         def show(self):
             self.cur.execute('''SELECT * FROM users''')
             user=self.cur.fetchall()
