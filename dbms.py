@@ -187,6 +187,14 @@ class database:
                             journal_id INTEGER)''')
             
 
+        def show_con_jour(self):
+            self.cur.execute('SELECT * FROM users_to_journals')
+            u_t_j = self.cur.fetchall()
+            #print(u_t_j)
+            return (u_t_j)
+            #TODO: transform to dict in a proper way
+            
+
         def add(self,telegram_id,telegram_user_name,telegram_name,update_period,last_update_time):
            
             try:
@@ -210,6 +218,7 @@ class database:
         def add_con_jour(self,user_id,issn_):
             self.cur.execute('SELECT journal_id FROM journals WHERE issn=?',(issn_,))
             jour_id=self.cur.fetchone()[0]
+            #print(issn_,jour_id)
             self.cur.execute('INSERT INTO users_to_journals VALUES (?,?)',(user_id,jour_id))
         def show(self):
             self.cur.execute('''SELECT * FROM users''')

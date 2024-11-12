@@ -38,6 +38,7 @@ class YourMiddleware(BaseMiddleware):
 
 router = Router()
 router.message.middleware(YourMiddleware())
+router.callback_query.middleware(YourMiddleware())
 
 class Context(StatesGroup):
     selecting_journals = State()
@@ -46,14 +47,16 @@ class Context(StatesGroup):
 
 
 
+JOURNALS_ISSN = ['0021-9606',  '0003-0554']
+
 JOURNALS = [
     "JCP",
-    "JQSRT",
+    "APSR",
 ]
 
 JOURNALS_CBK = [
     "JCP_pressed",
-    "JQSRT_pressed",
+    "APSR_pressed",
 ]
 assert(len(JOURNALS_CBK) == len(JOURNALS))
 
@@ -109,6 +112,11 @@ async def show_users(message: types.Message, state: FSMContext, dbms: Type[datab
     dic = dbms.users.show()
     print(dic)
 
+@router.message(Command("show_con_jour"))
+async def show_con_jour(message: types.Message, state: FSMContext, dbms: Type[database]):
+    #await message.answer()
+    ltup = dbms.users.show_con_jour()
+    print(ltup)
 
 @router.message(Command("start"))
 async def command_start_handler(message: types.Message, state: FSMContext, dbms: Type[database]):
@@ -176,7 +184,8 @@ async def process_journal_select(callback: CallbackQuery):
 
 
 @router.callback_query(Context.selecting_journals and F.data == FINALIZE_JOURNALS_CBK)
-async def finalize_journal_selection(callback: CallbackQuery, state: FSMContext):
+async def finalize_journal_selection(callback: CallbackQuery, state: FSMContext,
+                                     dbms: Type[database]):
     if isinstance(callback.message, types.InaccessibleMessage) or callback.message is None:
         logging.info(f"finalize_journal_selection: callback received broken/empty message. Ignoring the selection...")
         return
@@ -188,6 +197,10 @@ async def finalize_journal_selection(callback: CallbackQuery, state: FSMContext)
         return
 
     logging.info("User: {} => selected journals: {}".format(user_id, users_journal_db[user_id]))
+
+    for journal in users_journal_db[user_id]:
+        dbms.users.add_con_jour(user_id,JOURNALS_ISSN[journal])
+
 
     await callback.answer(text="Selection finalized!")
     await callback.message.answer(LEXICON[FINALIZE_JOURNALS_CBK])
