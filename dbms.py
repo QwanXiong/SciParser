@@ -62,7 +62,20 @@ class database:
             for i in sqtup:
                 self.cur.execute('INSERT INTO queue VALUES (?,?,?)',i)
                     
-            
+        def user_papers(self,user_id):
+            self.cur.execute('SELECT * FROM queues WHERE user_if=?',(user_id,))
+            queue_table=self.cur.fetchall()
+            dic={'paper_id':[],'title':[],'abstract':[],'journal':[]}
+            for i in queue_table:
+                self.cur.execute('SELECT paper_id,title,abstract,journal_id FROM papers WHERE paper_id=?',(i[0],))
+                paper=self.cur.fetchone()
+                dic['paper_id'].append(paper[0])
+                dic['title'].append(paper[1])
+                dic['abstract'].append(paper[2])
+                self.cur.execute('SELECT journal_name FROM journals WHERE journal_id=?',(paper[3],))
+                journal=self.cur.fecthone()
+                dic['journal'].append(journal[0])
+            return dic
 
 
 
