@@ -47,16 +47,22 @@ class Context(StatesGroup):
 
 
 
-JOURNALS_ISSN = ['0021-9606',  '0003-0554']
+JOURNALS_ISSN = ['0021-9606',  '0003-0554', '1879-1352', '1463-9084', '1793-6888']
 
 JOURNALS = [
-    "JCP",
-    "APSR",
+    "J. Chem. Phys.",
+    "Am. Political Sci. Rev.",
+    "J. Quant. Spectrosc. Radiat. Transfer ",
+    "Phys. Chem. Chem. Phys.",
+    "J. Theor. Comput. Chem."
 ]
 
 JOURNALS_CBK = [
     "JCP_pressed",
     "APSR_pressed",
+    "JQSRT_pressed",
+    "PCCP_pressed",
+    "JCTC_pressed"
 ]
 assert(len(JOURNALS_CBK) == len(JOURNALS))
 
@@ -113,6 +119,12 @@ class MyHandler(ErrorHandler):
         bot_err_logger.error("Some error "+str(type(self.event.exception).__name__)+" "+str(self.event.exception))
         #pass
        # bot_err_logger.error("Some error "+str(self.exception_name)+" "+str(self.event.exception))
+
+@router.message(Command("show_con_jour"))
+async def update_papers(message: types.Message, state: FSMContext, dbms: Type[database]):
+    #await message.answer()
+    date = '2024-11-01'
+    dbms.update(date)
 
 @router.message(Command("invoke_error"))
 async def command_invoke_error_handler(message: types.Message, state: FSMContext):
