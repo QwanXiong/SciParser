@@ -62,8 +62,8 @@ class database:
             for i in sqtup:
                 self.cur.execute('INSERT INTO queue VALUES (?,?,?)',i)
                     
-        def user_papers(self,user_id):
-            self.cur.execute('SELECT * FROM queues WHERE user_if=?',(user_id,))
+        def send_user_papers(self,user_id):
+            self.cur.execute('SELECT * FROM queue WHERE user_id=?',(user_id,))
             queue_table=self.cur.fetchall()
             dic={'paper_id':[],'title':[],'abstract':[],'journal':[]}
             for i in queue_table:
@@ -73,7 +73,7 @@ class database:
                 dic['title'].append(paper[1])
                 dic['abstract'].append(paper[2])
                 self.cur.execute('SELECT journal_name FROM journals WHERE journal_id=?',(paper[3],))
-                journal=self.cur.fecthone()
+                journal=self.cur.fetchone()
                 dic['journal'].append(journal[0])
             return dic
 
@@ -141,6 +141,7 @@ class database:
             jour=self.cur.fetchall()
             
             for i in jour:
+                print('journal: ',i)
                 d=0
                 data=pd.DataFrame()
                 a=0
@@ -174,7 +175,7 @@ class database:
             print('updated journals')
             self.cur.execute("SELECT journal_id FROM papers")
             #print(self.cur.fetchall())
-            self.queue(self.cur).papers_search()
+            database.queue(self.cur).papers_search()
     class users:
 
         def __init__(self,cursor):

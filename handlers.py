@@ -124,7 +124,14 @@ class MyHandler(ErrorHandler):
 async def update_papers(message: types.Message, state: FSMContext, dbms: Type[database]):
     #await message.answer()
     date = '2024-11-01'
-    dbms.update(date)
+    dbms.papers.update(date)
+
+@router.message(Command("send_papers"))
+async def send_papers(message: types.Message, state: FSMContext, dbms: Type[database]):
+    #await message.answer()
+    user_id = message.from_user.id
+    dic = dbms.queue.send_user_papers(user_id)
+    print(dic)
 
 @router.message(Command("invoke_error"))
 async def command_invoke_error_handler(message: types.Message, state: FSMContext):
