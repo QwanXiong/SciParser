@@ -4,7 +4,7 @@ from sentence_transformers import SentenceTransformer
 #from bs4 import BeautifulSoup as bs
 #from selenium import webdriver
 #from selenium.webdriver.common.by import By
-#import time
+import time
 #import re
 
 
@@ -87,7 +87,11 @@ def crossref_api(issn,date,offset):
     
     assert offset%100==0
     url="http://api.crossref.org/journals"+"/"+issn+"/works?filter=from-pub-date:"+date+'&rows=100'+'&offset='+str(offset)
-    tree=requests.get(url)
+    try:
+        tree=requests.get(url)
+    except:
+        time.sleep(3)
+        tree=requests.get(url)
      
     js_obj=json.loads(tree.content)
     if len(js_obj['message']['items'])==0:
