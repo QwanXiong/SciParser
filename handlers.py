@@ -131,6 +131,12 @@ async def show_con_jour(message: types.Message, state: FSMContext, dbms: Type[da
     ltup = dbms.users.show_con_jour()
     print(ltup)
 
+@router.message(Command("show_keywords"))
+async def show_keywords(message: types.Message, state: FSMContext, dbms: Type[database]):
+    #await message.answer()
+    dic = dbms.users.show_keywords()
+    print(dic)
+
 @router.message(Command("start"))
 async def command_start_handler(message: types.Message, state: FSMContext, dbms: Type[database]):
     #await bot.send_message(message.chat.id, fmt.text(LEXICON['/start']), reply_markup=build_journal_keyboard())
@@ -230,7 +236,7 @@ def uniq(seq):
 # print 'ok' to finish the keywords selection
 # retype already added field or write just a number to correct/delete a field
 @router.message(Context.waiting_for_keywords)
-async def process_keywords(message: types.Message, state: FSMContext):
+async def process_keywords(message: types.Message, state: FSMContext, dbms: Type[database]):
     if message.text is None:
         logging.info("process_keywords: message is empty. Ignoring it...")
         return
@@ -242,7 +248,11 @@ async def process_keywords(message: types.Message, state: FSMContext):
         str = ''
         print(users_keywords_db[user_id])
         for key in users_keywords_db[user_id]:
-            str = str+key+': '+', '.join(users_keywords_db[user_id][key])+'\n'
+            kwd_string_comma = ', '.join(users_keywords_db[user_id][key])
+            kwd_string_space = ' '.join(users_keywords_db[user_id][key])
+            str = str+key+': '+kwd_string_comma+'\n'
+            # WARNING: for now we save keywords here, but at the end we should save them where finalization is done
+            dbms.users.add_keywords(user_id,key,kwd_string_space)
         await message.answer("Here are the keywoards you submitted:\n"+str)
         return
 

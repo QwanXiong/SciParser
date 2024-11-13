@@ -238,12 +238,12 @@ class database:
             self.cur.execute('SELECT * FROM keywords')
             keywords=self.cur.fetchall()
             
-            
-            dic={'uesr_id':[],'area':[],'keywords':[]}
+            #print('keywords: ',keywords) 
+            dic={'user_id':[],'area':[],'keywords':[]}
             for i in keywords:
                 dic['area'].append(i[1])
                 dic['keywords'].append(i[2])
-                self.cur.execute('SELECT user_id FROM users_to_journals WHERE area_id=?',(i[0],))
+                self.cur.execute('SELECT user_id FROM users_to_keywords WHERE area_id=?',(i[0],))
                 u_t_k=self.cur.fetchone()
                 dic['user_id'].append(u_t_k[0])
             return dic
