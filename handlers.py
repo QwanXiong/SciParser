@@ -15,8 +15,8 @@ from aiogram import Router
 from loggers import bot_err_logger
 from aiogram.dispatcher.middlewares.base import BaseMiddleware
 
-from testclass import newtestclass
-from testclass import testclass
+#from testclass import newtestclass
+#from testclass import testclass
 from dbms import database_instance
 from dbms import database
 
@@ -69,13 +69,15 @@ FINALIZE_KEYWORDS_CBK = "finalize_keywords_selection_pressed"
 LEXICON: Dict[str, str] = {
     "/start": "Dear User,\nThis is a service bot designed to keep track of recently released articles in the subject area you are interested in.\n"
               "Please, select the journal from the list below. More journals will soon be available!",
-    FINALIZE_JOURNALS_CBK: "Thank you! Your journal selection has been saved. Please enter the comma separated list of keywords.",
+    FINALIZE_JOURNALS_CBK: "Thank you! Your journal selection has been saved. Please enter the scientific fields you want to keep track of and after the colon for each of them enter the comma separated list of keywords.\n"\
+            'E.g. molecular spectroscopy: infrared, collision induced absorption, weakly bound complexes, CO2, molecular vibrations',
     FINALIZE_KEYWORDS_CBK: "Thank you! The entered keywords have been saved. Stay tuned for notifications!"
 }
 
 
 users_journal_db: Dict[int, List[int]]  = {}
 users_keywords_db: Dict[int, List[str]] = {}
+users_keywords_db: Dict[int, Dict[str, List[str]]] = {}
 
 
 def build_keyboard(options: List[str], callback_data: List[str], finalize_button_text: str, finalize_button_cbk: str, *selected_options: str) -> InlineKeyboardMarkup:
@@ -100,6 +102,17 @@ def build_keyboard(options: List[str], callback_data: List[str], finalize_button
 def build_journal_keyboard(*selected_options: str) -> InlineKeyboardMarkup:
     return build_keyboard(JOURNALS, JOURNALS_CBK, FINALIZE_JOURNALS_TEXT, FINALIZE_JOURNALS_CBK, *selected_options)
 
+@router.errors()
+class MyHandler(ErrorHandler):
+    async def handle(self):
+       # vv = vars(self)
+       # #print(vv)
+       # for v in vv.items():
+       #     print(v)
+       # print(type(self.event.exception).__name__)
+        bot_err_logger.error("Some error "+str(type(self.event.exception).__name__)+" "+str(self.event.exception))
+        #pass
+       # bot_err_logger.error("Some error "+str(self.exception_name)+" "+str(self.event.exception))
 
 @router.message(Command("invoke_error"))
 async def command_invoke_error_handler(message: types.Message, state: FSMContext):
@@ -213,83 +226,103 @@ def uniq(seq):
     seen_add = seen.add
     return [x for x in seq if not (x in seen or seen_add(x))]
 
-
+# TODO: add keywords in separate messages for each field
+# print 'ok' to finish the keywords selection
+# retype already added field or write just a number to correct/delete a field
 @router.message(Context.waiting_for_keywords)
 async def process_keywords(message: types.Message, state: FSMContext):
     if message.text is None:
         logging.info("process_keywords: message is empty. Ignoring it...")
         return
-
-    keywords = message.text.split(',')
-    keywords = [keyword.strip() for keyword in keywords if keyword.strip()]  # Remove any extra spaces
-
-    if message.from_user is None:
-        logging.info("process_keywords: from_user field is empty. Could not get user from the message. Ignoring it...")
-        return
-
     user_id = message.from_user.id
-    if user_id not in users_keywords_db:
-        users_keywords_db[user_id] = keywords
+    if message.text.strip(' \n\t').lower() == 'ok':
+        if user_id not in users_keywords_db:
+            await message.answer('You have not added any keywords!\n')
+            return
+        str = ''
+        print(users_keywords_db[user_id])
+        for key in users_keywords_db[user_id]:
+            str = str+key+': '+', '.join(users_keywords_db[user_id][key])+'\n'
+        await message.answer("Here are the keywoards you submitted:\n"+str)
+        return
+
+
+    if message.text.find(':') == -1:
+        await message.answer("Please provide the correct command")
     else:
-        users_keywords_db[user_id].extend(keywords)
-        users_keywords_db[user_id] = uniq(users_keywords_db[user_id])
-
-    keywords = users_keywords_db[user_id]
-    logging.info("User: {} => selected keywords: {}".format(user_id, keywords))
-
-    await message.answer(
-        "Here are the keywords you submitted. Clicking on the corresponding button allows you to remove the unwanted items from the list. You can also type in additional comma-separated keywords, which will be included in the list.",
-        reply_markup=build_keyboard(keywords, keywords, FINALIZE_KEYWORDS_TEXT, FINALIZE_KEYWORDS_CBK)
-        # NOTE: is this a good idea to use the keywords themselves as callback_data for the buttons?
-    )
-
-
-@router.callback_query(Context.waiting_for_keywords and F.data != FINALIZE_KEYWORDS_CBK)
-async def remove_keyword(callback: CallbackQuery):
-    if isinstance(callback.message, types.InaccessibleMessage) or callback.message is None:
-        logging.info(f"remove_keyword: callback received broken/empty message. Ignoring the selection...")
-        return
-    
-    user_id = callback.message.chat.id
-
-    keyword = callback.data
-    await callback.answer()
-
-    assert keyword in users_keywords_db[user_id]
-    users_keywords_db[user_id].remove(keyword)
-    keywords = users_keywords_db[user_id]
-
-    await callback.message.edit_reply_markup(
-        reply_markup=build_keyboard(keywords, keywords, FINALIZE_KEYWORDS_TEXT, FINALIZE_KEYWORDS_CBK)
-    )
+        spl = message.text.split(':')
+        if len(spl) > 2:
+            await message.answer("Only one field is allowed per message. Please enter again")
+        else:
+            field = spl[0].strip(' \n\t')
+            keywords = spl[1].split(',')
+            keywords = [keyword.strip() for keyword in keywords if keyword.strip()]  # Remove any extra spaces
+            if user_id not in users_keywords_db:
+               # field_dic = {}
+               # field_dic[field] = keywords
+                users_keywords_db[user_id] = {} 
+            users_keywords_db[user_id][field] = keywords
 
 
-@router.errors()
-class MyHandler(ErrorHandler):
-    async def handle(self):
-       # vv = vars(self)
-       # #print(vv)
-       # for v in vv.items():
-       #     print(v)
-       # print(type(self.event.exception).__name__)
-        bot_err_logger.error("Some error "+str(type(self.event.exception).__name__)+" "+str(self.event.exception))
-        #pass
-       # bot_err_logger.error("Some error "+str(self.exception_name)+" "+str(self.event.exception))
+#    keywords = message.text.split(',')
+#    keywords = [keyword.strip() for keyword in keywords if keyword.strip()]  # Remove any extra spaces
+#
+#    if message.from_user is None:
+#        logging.info("process_keywords: from_user field is empty. Could not get user from the message. Ignoring it...")
+#        return
+#
+#    user_id = message.from_user.id
+#    if user_id not in users_keywords_db:
+#        users_keywords_db[user_id] = keywords
+#    else:
+#        users_keywords_db[user_id].extend(keywords)
+#        users_keywords_db[user_id] = uniq(users_keywords_db[user_id])
+#
+#    keywords = users_keywords_db[user_id]
+#    logging.info("User: {} => selected keywords: {}".format(user_id, keywords))
+#
+#    await message.answer(
+#        "Here are the keywords you submitted. Clicking on the corresponding button allows you to remove the unwanted items from the list. You can also type in additional comma-separated keywords, which will be included in the list.",
+#        reply_markup=build_keyboard(keywords, keywords, FINALIZE_KEYWORDS_TEXT, FINALIZE_KEYWORDS_CBK)
+#        # NOTE: is this a good idea to use the keywords themselves as callback_data for the buttons?
+#    )
+#
 
-@router.callback_query(Context.waiting_for_keywords and F.data == FINALIZE_KEYWORDS_CBK)
-async def finalize_keywords_selection(callback: CallbackQuery, state: FSMContext):
-    if isinstance(callback.message, types.InaccessibleMessage) or callback.message is None:
-        logging.info(f"finalize_keywords_selection: callback received broken/empty message. Ignoring the selection...")
-        return
+#@router.callback_query(Context.waiting_for_keywords and F.data != FINALIZE_KEYWORDS_CBK)
+#async def remove_keyword(callback: CallbackQuery):
+#    if isinstance(callback.message, types.InaccessibleMessage) or callback.message is None:
+#        logging.info(f"remove_keyword: callback received broken/empty message. Ignoring the selection...")
+#        return
+#    
+#    user_id = callback.message.chat.id
+#
+#    keyword = callback.data
+#    await callback.answer()
+#
+#    assert keyword in users_keywords_db[user_id]
+#    users_keywords_db[user_id].remove(keyword)
+#    keywords = users_keywords_db[user_id]
+#
+#    await callback.message.edit_reply_markup(
+#        reply_markup=build_keyboard(keywords, keywords, FINALIZE_KEYWORDS_TEXT, FINALIZE_KEYWORDS_CBK)
+#    )
+#
 
-    user_id = callback.message.chat.id
-    
-    logging.info("User: {} => selected keywords: {}".format(user_id, users_keywords_db[user_id]))
 
-    if user_id not in users_keywords_db.keys() or not users_keywords_db[user_id]:
-        await callback.answer(text="Please, submit at least 1 keyword!")
-        return
-
-    await callback.answer(text="Keywords selection finalized!")
-    await callback.message.answer(LEXICON[FINALIZE_KEYWORDS_CBK])
-    await state.clear()
+#@router.callback_query(Context.waiting_for_keywords and F.data == FINALIZE_KEYWORDS_CBK)
+#async def finalize_keywords_selection(callback: CallbackQuery, state: FSMContext):
+#    if isinstance(callback.message, types.InaccessibleMessage) or callback.message is None:
+#        logging.info(f"finalize_keywords_selection: callback received broken/empty message. Ignoring the selection...")
+#        return
+#
+#    user_id = callback.message.chat.id
+#    
+#    logging.info("User: {} => selected keywords: {}".format(user_id, users_keywords_db[user_id]))
+#
+#    if user_id not in users_keywords_db.keys() or not users_keywords_db[user_id]:
+#        await callback.answer(text="Please, submit at least 1 keyword!")
+#        return
+#
+#    await callback.answer(text="Keywords selection finalized!")
+#    await callback.message.answer(LEXICON[FINALIZE_KEYWORDS_CBK])
+#    await state.clear()
