@@ -234,6 +234,20 @@ class database:
                 
             return dic
 
+        def show_keywords(self):
+            self.cur.execute('SELECT * FROM keywords')
+            keywords=self.cur.fetchall()
+            
+            
+            dic={'uesr_id':[],'area':[],'keywords':[]}
+            for i in keywords:
+                dic['area'].append(i[1])
+                dic['keywords'].append(i[2])
+                self.cur.execute('SELECT user_id FROM users_to_journals WHERE area_id=?',(i[0],))
+                u_t_k=self.cur.fetchone()
+                dic['user_id'].append(u_t_k[0])
+            return dic
+
 database_instance = database()
       
       
