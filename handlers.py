@@ -47,14 +47,14 @@ class Context(StatesGroup):
 
 
 
-JOURNALS_ISSN = ['0021-9606',  '0003-0554', '1879-1352', '1463-9084', '1793-6888']
+JOURNALS_ISSN = ['0021-9606',  '0003-0554', '0022-4073', '1463-9084', '1549-9626']
 
 JOURNALS = [
     "J. Chem. Phys.",
     "Am. Political Sci. Rev.",
     "J. Quant. Spectrosc. Radiat. Transfer ",
     "Phys. Chem. Chem. Phys.",
-    "J. Theor. Comput. Chem."
+    "J. Chem. Theory Comput."
 ]
 
 JOURNALS_CBK = [
@@ -120,7 +120,7 @@ class MyHandler(ErrorHandler):
         #pass
        # bot_err_logger.error("Some error "+str(self.exception_name)+" "+str(self.event.exception))
 
-@router.message(Command("show_con_jour"))
+@router.message(Command("update_papers"))
 async def update_papers(message: types.Message, state: FSMContext, dbms: Type[database]):
     #await message.answer()
     date = '2024-11-01'
