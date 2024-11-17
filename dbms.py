@@ -28,20 +28,30 @@ class database:
             self.cur=cursor
         def create_table(self):
             self.cur.execute('''CREATE TABLE IF NOT EXISTS queue
-                            (paper_id INTEGER PRIMARY KEY,
+                            (paper_id INTEGER,
                             area_id INTEGER,
                             user_id INTEGER)             
                             ''')
-        def papers_search(self):
+        def papers_search(self,last_papers=None,user_id='all'):
 
             #self.cur.
             
-            self.cur.execute('SELECT paper_id,abstract_vec,journal_id FROM papers')
-            papers_arr=self.cur.fetchall()
+            if last_papers==None:
+                self.cur.execute('SELECT paper_id,abstract_vec,journal_id FROM papers')
+                papers_arr=self.cur.fetchall()
+            else:
+                papers_arr=last_papers
             self.cur.execute('SELECT area_id, keywords_vec FROM keywords')
             keywords_arr=self.cur.fetchall()
             sqtup=[]
             for i in keywords_arr:
+                if user_id!='all':
+                    self.cur.execute('SELECT * FROM users_to_keywords WHERE user_id=? AND area_id=?',(user_id,i[0]))
+                   # u_id=self.cur.fetchall()
+                    #print(u_id)
+                    if len(self.cur.fetchall())==0:
+                        continue
+                
                 
                 for d in papers_arr:
                     #print(i[1].replace('\n',' ').replace('[','').replace(']',''),'|||||')#,np.fromstring(i[1].replace('\n','')),np.fromstring(i[1]).shape)
@@ -50,6 +60,7 @@ class database:
                     if dist_>0.3:
                         #print(i[0])
                         #if d[2]
+                       # if user_id='all':
                         self.cur.execute('SELECT user_id FROM users_to_keywords WHERE area_id==?',(i[0],))
                         
                         user_id=self.cur.fetchone()[0]
@@ -72,7 +83,9 @@ class database:
                 dic['paper_id'].append(paper[0])
                 dic['title'].append(paper[1])
                 dic['abstract'].append(paper[2])
-                self.cur.execute('SELECT journal_name FROM journals WHERE journal_id=?',(paper[3],))
+                #print(paper[3])
+                
+                self.cur.execute('SELECT journal_name FROM journals WHERE journal_id=?',(int.from_bytes(paper[3],'little'),))
                 journal=self.cur.fetchone()
                 dic['journal'].append(journal[0])
             return dic
@@ -139,7 +152,7 @@ class database:
             self.cur.execute('SELECT journal_id,issn FROM journals')
             
             jour=self.cur.fetchall()
-            
+            last_papers=[]
             for i in jour:
                 print('journal: ',i)
                 d=0
@@ -163,6 +176,7 @@ class database:
                     id_=ids[0]+1
                 else:
                     id_=1
+                
                 for d in range(data.shape[0]):
                    
                     #print( data['title'][d])
@@ -171,11 +185,13 @@ class database:
                     doi=self.cur.fetchall()
                     if len(doi)==0:
                         self.cur.execute('INSERT INTO papers VALUES(?,?,?,?,?,?,?,?,?,?)',(id_,data['title'][d],data['type'][d],data['author'][d],data['volume'][d],data['issue'][d],str(data['abstract'][d]),str(data['abstract_vec'][d]),data['doi'][d],data['journal_id'][d]))
+                        last_papers.append((id_,str(data['abstract_vec'][d]),data['journal_id'][d]))
                         id_+=1
             print('updated journals')
-            self.cur.execute("SELECT journal_id FROM papers")
+            #self.cur.execute("SELECT journal_id FROM papers")
             #print(self.cur.fetchall())
-            database.queue(self.cur).papers_search()
+            
+            database.queue(self.cur).papers_search(last_papers=last_papers)
     class users:
 
         def __init__(self,cursor):
@@ -309,5 +325,20 @@ connection.close()
 #fil.write(str(cursor.fetchall()))
 #fil.close()
 '''
-              
+'''
+db=database()
+db.users.add(123,'mama','sadsa',30,'2024-01-01')
+db.users.add_keywords(123,'climate','climate change climate politics international climate regime environmental law')
+db.users.add_con_jour(123,'0003-0554')
+db.papers.update('2024-10-01')
+print(db.queue.send_user_papers(123))
+db.users.add(432,'asdasd','fff',30,'2024-01-01')
+db.users.add_keywords(432,'physics','molecular dynamics quantum world chemical physics')
+db.users.add_con_jour(432,'0022-4073')
+db.users.add_con_jour(432,'1463-9084')
+db.queue.papers_search(user_id=432)
+print(db.queue.send_user_papers(432))
+print('_____')
+print(db.queue.send_user_papers(123))
+'''           
               
