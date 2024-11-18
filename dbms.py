@@ -76,18 +76,22 @@ class database:
         def send_user_papers(self,user_id):
             self.cur.execute('SELECT * FROM queue WHERE user_id=?',(user_id,))
             queue_table=self.cur.fetchall()
-            dic={'paper_id':[],'title':[],'abstract':[],'journal':[]}
+            dic={'paper_id':[],'title':[],'abstract':[],'journal':[],'area':[],'doi':[]}
             for i in queue_table:
-                self.cur.execute('SELECT paper_id,title,abstract,journal_id FROM papers WHERE paper_id=?',(i[0],))
+                self.cur.execute('SELECT paper_id,title,abstract,journal_id,doi FROM papers WHERE paper_id=?',(i[0],))
                 paper=self.cur.fetchone()
                 dic['paper_id'].append(paper[0])
                 dic['title'].append(paper[1])
                 dic['abstract'].append(paper[2])
+                dic['doi'].append(paper[4])
                 #print(paper[3])
-                
+                self.cur.execute('SELECT area_name FROM keywords WHERE area_id=?', (i[1],))
+                area=self.cur.fetchone()
+                dic['area'].append(area[0])
                 self.cur.execute('SELECT journal_name FROM journals WHERE journal_id=?',(int.from_bytes(paper[3],'little'),))
                 journal=self.cur.fetchone()
                 dic['journal'].append(journal[0])
+            self.cur.execute('DELETE FROM queue WHERE user_id=?',(user_id,))
             return dic
 
 
@@ -337,8 +341,10 @@ db.users.add_keywords(432,'physics','molecular dynamics quantum world chemical p
 db.users.add_con_jour(432,'0022-4073')
 db.users.add_con_jour(432,'1463-9084')
 db.queue.papers_search(user_id=432)
-print(db.queue.send_user_papers(432))
+#print(db.queue.send_user_papers(432))
 print('_____')
-print(db.queue.send_user_papers(123))
-'''           
+print(db.cur.execute("SELECT * FROM queue").fetchall())
+#print(db.queue.send_user_papers(123))
+          
               
+'''

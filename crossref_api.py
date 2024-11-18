@@ -86,7 +86,7 @@ def vecs(text,model):
 def crossref_api(issn,date,offset):
     
     assert offset%100==0
-    url="http://api.crossref.org/journals"+"/"+issn+"/works?filter=from-pub-date:"+date+'&rows=100'+'&offset='+str(offset)
+    url="http://api.crossref.org/journals"+"/"+issn+"/works?filter=from-index-date:"+date+'&rows=100'+'&offset='+str(offset)
     try:
         tree=requests.get(url)
     except:
